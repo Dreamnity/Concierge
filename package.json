@@ -1,5 +1,5 @@
 {
-	"name": "Concierge",
+	"name": "concierge",
 	"version": "0.0.1",
 	"description": "Lightweight API server, made for fun",
 	"main": "index.js",
