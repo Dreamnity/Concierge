@@ -1,1 +1,3 @@
-(it is not made for fun, it is made to compete autocode)
+The rise of websocket-based API server(internal layer use websocket, outer use)
+
+And ofcource its a oneliner again(f\*)
