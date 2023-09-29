@@ -1,3 +1,3 @@
-The rise of websocket-based API server(internal layer use websocket, outer use)
+The rise of websocket-based API server(internal layer use websocket, outer use http/websocket)
 
-And ofcource its a oneliner again(f\*)
+And ofcource its a oneliner again(i cant resis-)
