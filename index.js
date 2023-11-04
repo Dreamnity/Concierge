@@ -1,2 +1,79 @@
-var d={},f={};function hb(){this.ia=true}const g=new (b=require('ws')).WebSocketServer({noServer:1});g.on("connection",e=>{e.ia=1;e.on('error',err=>{console.error(err);e.terminate()});let a=Buffer.from(((e._socket.address().address+[...g.clients.values()].findIndex(b=>b===e)).toString(16)+Math.floor((1+Math.random())*0x10000).toString(16).substring(1)).split('').filter(e=>/[0-9a-fA-F]/g.test(e)).join('').toUpperCase(),'hex').toString('base64url');d[a]=a;f[a]=e;console.log("Connected: %s",a);e.on("message",b=>{var c;try{c=JSON.parse(b);}catch(j){return e.send('{"error":"invalid payload","detailed":"'+j.message+'"}')}"object"!==typeof c&&e.send('{"error":"invalid payload"}');c.newName&&((Object.values(d).includes(c.newName)&&d[a]!==c.newName)?e.send('{"error":"duplicated name"}'):(()=>{b=d[a],d[a]=c.newName,b!==c.newName&&console.log("Name changed: %s => %s",b,d[a])})());if(c.target&&c.message){b=get(c.target);if(!b)return e.send('{"error":"invalid target"}');b.send(JSON.stringify({origin:d[a],message:c.message}));console.log("Sent: %s => %s: %s",d[a],c.target,c.message)}else(c.target||c.message)&&e.send('{"error":"invalid payload"}')}).on("close",()=>{delete d[a];delete f[a];console.log("Closed: %s",a)}).on('pong',hb);return a});setInterval(()=>g.clients.forEach(ws=>ws.ia?ws.ping((ws.ia=0)||null):ws.terminate()),30000);
-function get(t){b=Object.keys(d).find(h=>d[h]===t||h===t);return '@a'===t?{send:msg=>g.clients.forEach(ws=>ws.send(msg))}:t.startsWith('@r[')?{send:msg=>g.clients.forEach(ws=>d[Object.keys(f).find(e=>f[e]===ws)].match(new RegExp(...((gr)=>(gr[3]?[gr[3]]:[gr[1]||'^$',gr[2]]))(t.match(/@r(?:\[(.+),((?:[gmiyuvsd]){1,8})\]|\[(.+)\])/)))!==null&&ws.send(msg)))}:f[b]||f[t]}p=Number.isNaN(p1=parseInt(process.argv[2]))?80:p1,pu=new b.WebSocket('ws:localhost:'+p).on('open',()=>pu.send('{"newName":"PUBLIC"}')),url=require('url'),require('http').createServer().on('upgrade',(r,s,h)=>{s.on('error',e=>console.error('Socket error\n',e));g.handleUpgrade(r,s,h,ws=>g.emit('connection',ws));}).on('request',(q,s)=>{l=url.parse(q.url);if(l.path==='/')return s.end('Concierge: The rise of websocket-based API\n\nThis api is originally made for sneaky host, to make it easier for members to make APIs on sneaky without having to port forward/tunnel\n\nUsage: \nClient:\n- Websocket-based: ws://<thisurl>/\n - use JSON to communicate:\n  - Send message: {"target":"<endpoint>","message":"<payload>"}\n  - Receive message: {"origin":"<endpoint>","message":"<payload>"}\n  - Change name: {"newName":"<newname>"}\n- HTTP-based: https://<thisurl>/<endpoint>?message=<payload> or https://<thisurl>/?target=<endpoint>&message=<payload>\nService: same as client\'s websocket');u=Object.fromEntries(new url.URLSearchParams(l.query)),t=setTimeout(()=>{try{s.end(u.newName?'OK':'{"error":"No response from target"}')}catch{}},u.newName?500:20000);pu.once('message',m=>{try{d=JSON.parse(m.toString());d.error&&s.writeHead(500,d.error)}catch{}s.end(m.toString()),clearTimeout(t)});if((!u.target)&&(!!(pn=l.pathname.split('/').slice(1))[0]))u.target=pn.join('.');u.message&&u.target?pu.send(JSON.stringify(u)):s.end(s.writeHead(500)&&'{"error":"invalid payload"}')}).listen(p);
+const { WebSocketServer } = require("ws");
+
+const server = new WebSocketServer({
+	port: 8000,
+})
+	.on("connection", client => {
+		client.name = false; //unauthenticated
+		let e = client;
+		client.id = Buffer.from(
+			(
+				(
+					e._socket.address().address +
+					[...server.clients.values()].findIndex(b => b === e)
+				).toString(16) +
+				Math.floor((1 + Math.random()) * 0x10000)
+					.toString(16)
+					.substring(1)
+			)
+				.split("")
+				.filter(e => /[0-9a-fA-F]/g.test(e))
+				.join("")
+				.toUpperCase(),
+			"hex"
+		).toString("base64url");
+		client
+			.on("message", msg => {
+				const re = client.send;
+                try {
+                    msg = msg.toString();
+					const endpraw = msg
+						.match(/^(?:(send) [^ ]+ .+|(reply) .+|(name) .+|(list))$/m);
+                    const endp = endpraw ? endpraw.slice(1).join("") : "";
+					if (!client.name && endp != "name")
+						return client.send("error name_unspecified");
+					const e = {};
+					switch (endp) {
+						case "name":
+                            e.reg = msg.match(/^name ([a-zA-Z0-9\/.]+)$/m);
+							if (!e.reg) return client.send("error name_incorrect_format");
+							if (find(e.reg[1])) return client.send("error name_duplicated");
+							client.name = e.reg[1];
+							return client.send("ok");
+						case "send":
+							e.reg = msg.match(/^send ([a-zA-Z0-9\/.]+) (.*)$/m);
+							e.target = find(e.reg[1]);
+							if (!e.target) return client.send("error target_not_found");
+							if (!e.reg[2]) return client.send("error content_empty");
+							e.target.lastsender = client;
+							e.target.send("message " + client.name + " " + e.reg[2]);
+							return client.send("ok");
+						case "reply":
+							e.reg = msg.match(/^reply (.+)$/m);
+							if (!e.reg[1]) return client.send("error content_empty");
+							if (!client.lastsender) return client.send("error target_not_found");
+							client.lastsender.send("message " + client.name + " " + e.reg[1]);
+							return client.send("ok");
+						case "list":
+							return client.send(
+								"list " +
+									[...server.clients.values()]
+										.map(e => e.id + ":" + e.name)
+										.join(",")
+							);
+						default:
+							return client.send("error endpoint_not_found_or_wrong_usage");
+					}
+				} catch (e) {
+					client.send("error internal " + e.message);
+				}
+			})
+			.on("error", e => client.send("error internal " + e.message));
+	})
+	.on("error", () => {});
+function find(query) {
+	return [...server.clients.values()].find(
+		e =>
+			e.id == query || e.name == query || e._socket.address().address == query
+	);
+}
