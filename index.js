@@ -3,8 +3,8 @@ const { createServer } = require('http');
 const server = new WebSocketServer({
 	noServer: true,
 })
-	.on("connection", client => {
-		client.name = false; //unauthenticated
+	.on("connection", (client,req) => {
+		client.name = req.url.substr(1)||false; //unauthenticated
 		let e = client;
 		client.id = Buffer.from(
 			(
