@@ -81,13 +81,16 @@ function find(query) {
 }
 
 const httpserver = createServer((req, res) => {
+	var data = "";
+	req.on("data", e => (data += e));
 	const path = req.url.substring(1);
 	if(!path) return res.end(
 		'list '+[...server.clients.values()].map(e => e.id + ":" + e.name).join(",")
 	);
 	const target = find(path);
 	if (!target) return res.end('error target_not_found');
-	
+	target.lastsender = { send: msg => res.end(msg) };
+	req.on("end", () => target.send("request " + data));
 }).on('upgrade',(request, socket, head)=>server.handleUpgrade(request, socket, head, function done(ws) {
       server.emit('connection', ws, request);
     })
