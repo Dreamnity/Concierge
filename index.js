@@ -89,7 +89,7 @@ const httpserver = createServer((req, res) => {
 	);
 	const target = find(path);
 	if (!target) return res.end('error target_not_found');
-	target.lastsender = { send: msg => res.end(msg) };
+	target.lastsender = { send: msg => res.end(msg.match(/^message .+ (.+)$/s)[1]) };
 	req.on("end", () => target.send("request " + data));
 }).on('upgrade',(request, socket, head)=>server.handleUpgrade(request, socket, head, function done(ws) {
       server.emit('connection', ws, request);
