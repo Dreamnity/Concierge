@@ -1,7 +1,7 @@
 const { WebSocketServer } = require("ws");
-
+const { createServer } = require('http');
 const server = new WebSocketServer({
-	port: 8000,
+	noServer: true,
 })
 	.on("connection", client => {
 		client.name = false; //unauthenticated
@@ -70,10 +70,24 @@ const server = new WebSocketServer({
 			})
 			.on("error", e => client.send("error internal " + e.message));
 	})
-	.on("error", () => {});
+	.on("error", () => { })
+	.on('listening',()=>console.log('Working.'));
 function find(query) {
 	return [...server.clients.values()].find(
 		e =>
 			e.id == query || e.name == query || e._socket.address().address == query
 	);
 }
+
+const httpserver = createServer((req, res) => {
+	const path = new URL(req.url, req.headers.host).pathname.substring(1);
+	if(!path) return res.end(
+		'list '+[...server.clients.values()].map(e => e.id + ":" + e.name).join(",")
+	);
+	const target = find(path);
+	if (!target) return res.end('error target_not_found');
+	
+}).on('upgrade',(request, socket, head)=>server.handleUpgrade(request, socket, head, function done(ws) {
+      server.emit('connection', ws, request);
+    })
+)
