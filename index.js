@@ -3,8 +3,13 @@ const { createServer } = require('http');
 const server = new WebSocketServer({
 	noServer: true,
 })
-	.on("connection", (client,req) => {
-		client.name = req.url.substr(1)||false; //unauthenticated
+	.on("connection", (client, req) => {
+		if (
+			req.url.substr(1) &&
+			!/[a-zA-Z0-9\/.]+/m.test((prename = req.url.substr(1)))
+		)
+			client.close(undefined, "error name_incorrect_format");
+		client.name = req.url.substr(1) || false; //unauthenticated
 		let e = client;
 		client.id = Buffer.from(
 			(
@@ -24,19 +29,20 @@ const server = new WebSocketServer({
 		).toString("base64url");
 		client
 			.on("message", msg => {
-				console.log('['+(client.name||client.id)+'] '+msg)
+				console.log("[" + (client.name || client.id) + "] " + msg);
 				const re = client.send;
-                try {
-                    msg = msg.toString();
-					const endpraw = msg
-						.match(/^(?:(send) [^ ]+ .+|(reply) .+|(name) .+|(list))$/m);
-                    const endp = endpraw ? endpraw.slice(1).join("") : "";
+				try {
+					msg = msg.toString();
+					const endpraw = msg.match(
+						/^(?:(send) [^ ]+ .+|(reply) .+|(name) .+|(list))$/m
+					);
+					const endp = endpraw ? endpraw.slice(1).join("") : "";
 					if (!client.name && endp != "name")
 						return client.send("error name_unspecified");
 					const e = {};
 					switch (endp) {
 						case "name":
-                            e.reg = msg.match(/^name ([a-zA-Z0-9\/.]+)$/m);
+							e.reg = msg.match(/^name ([a-zA-Z0-9\/.]+)$/m);
 							if (!e.reg) return client.send("error name_incorrect_format");
 							if (find(e.reg[1])) return client.send("error name_duplicated");
 							client.name = e.reg[1];
@@ -52,7 +58,8 @@ const server = new WebSocketServer({
 						case "reply":
 							e.reg = msg.match(/^reply (.+)$/m);
 							if (!e.reg[1]) return client.send("error content_empty");
-							if (!client.lastsender) return client.send("error target_not_found");
+							if (!client.lastsender)
+								return client.send("error target_not_found");
 							client.lastsender.send("message " + client.name + " " + e.reg[1]);
 							return client.send("ok");
 						case "list":
@@ -71,8 +78,8 @@ const server = new WebSocketServer({
 			})
 			.on("error", e => client.send("error internal " + e.message));
 	})
-	.on("error", () => { })
-	.on('listening',()=>console.log('Working.'));
+	.on("error", () => {})
+	.on("listening", () => console.log("Working."));
 function find(query) {
 	return [...server.clients.values()].find(
 		e =>
