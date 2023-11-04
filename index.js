@@ -24,6 +24,7 @@ const server = new WebSocketServer({
 		).toString("base64url");
 		client
 			.on("message", msg => {
+				console.log('['+(client.name||client.id)+'] '+msg)
 				const re = client.send;
                 try {
                     msg = msg.toString();
@@ -90,4 +91,4 @@ const httpserver = createServer((req, res) => {
 }).on('upgrade',(request, socket, head)=>server.handleUpgrade(request, socket, head, function done(ws) {
       server.emit('connection', ws, request);
     })
-).listen(process.argv[2]||80)
+).listen(parseInt(process.argv[2])||80);

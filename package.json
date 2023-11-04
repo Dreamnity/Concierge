@@ -1,8 +1,7 @@
 {
+	"main":"index.js",
 	"dependencies": {
-		"ws": "^8.14.2"
-	},
-	"optionalDependencies": {
+		"ws": "^8.14.2",
 		"bufferutil": "^4.0.7",
 		"utf-8-validate": "^6.0.3"
 	}
