@@ -81,7 +81,7 @@ function find(query) {
 }
 
 const httpserver = createServer((req, res) => {
-	const path = new URL(req.url, req.headers.host).pathname.substring(1);
+	const path = req.url.substring(1);
 	if(!path) return res.end(
 		'list '+[...server.clients.values()].map(e => e.id + ":" + e.name).join(",")
 	);
