@@ -4,12 +4,13 @@ const server = new WebSocketServer({
 	noServer: true,
 })
 	.on("connection", (client, req) => {
+		const name = req.url.substr(1);
 		if (
-			req.url.substr(1) &&
-			(!/[a-zA-Z0-9\/.]+/m.test((prename = req.url.substr(1))) || find(prename))
+			name &&
+			(!/[a-zA-Z0-9\/.]+/m.test(name) || find(name))
 		)
 			client.close(undefined, "error name_incorrect_format");
-		client.name = req.url.substr(1) || false; //unauthenticated
+		client.name = name || false; //unauthenticated
 		let e = client;
 		client.id = Buffer.from(
 			(
