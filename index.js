@@ -68,7 +68,7 @@ const server = new WebSocketServer({
 							return client.send(
 								"list " +
 									[...server.clients.values()]
-										.map(e => e.id + ":" + e.name)
+										.map(e => e.id + ":" + (e.name||'_unnamed_'))
 										.join(",")
 							);
 						default:
