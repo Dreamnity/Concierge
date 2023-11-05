@@ -1,13 +1,13 @@
-import EventEmitter from "events";
-import WebSocket from "ws";
+const {EventEmitter} = require("events");
+const { WebSocket } = require("ws");
 class ConciergeClient extends EventEmitter {
-	#ws: WebSocket;
-	constructor(name?: string, host?: string) {
+	#ws;
+	constructor(name='', host='') {
 		super();
 		this.#ws = new WebSocket((host || "https://cc.hop.sh/") + name).on('open',()=>this.emit('ready'));
 		this.#ws.on('message', msgraw => {
-			let msg: string = msgraw.toString();
-			let match: RegExpMatchArray | null;
+			let msg = msgraw.toString();
+			let match;
 			match = msg.match(/^message (?<from>[^ ]+) (?<message>.+)$/m);
 			if (match) {
 				return this.emit('message',match.groups);
@@ -31,23 +31,24 @@ class ConciergeClient extends EventEmitter {
 		})
 	}
 	async list() {
-		return (await this.#request("list")).split(",").map(e => {
+		return (await this.#request("list")).substr(5).split(",").map(e => {
 			const [id, name] = e.split(":");
 			return { id, name };
 		});
 	}
-	send(target: string, message: string) {
+	send(target, message) {
 		return this.#request(`send ${target} ${message}`);
 	}
-	reply(message: string) {
+	reply(message) {
 		return this.#request(`reply ${message}`);
 	}
-	name(newName: string) {
+	name(newName) {
 		return this.#request(`name ${newName}`);
 	}
-	#request(data: string): Promise<string> {
+	#request(data) {
 		return new Promise((r, j) => {
-			const fn = (data: string) => {
+			const fn = (data) => {
+				data = data.toString()
 				if (data.startsWith("error ")) return j(data);
 				r(data);
 			};
@@ -59,4 +60,4 @@ class ConciergeClient extends EventEmitter {
 		});
 	}
 }
-export default ConciergeClient;
+module.exports=ConciergeClient;

@@ -7,7 +7,7 @@ const server = new WebSocketServer({
 		const name = req.url.substr(1);
 		if (
 			name &&
-			(!/[a-zA-Z0-9\/.]+/m.test(name) || find(name))
+			(!/[a-zA-Z0-9\/._-]+/m.test(name) || find(name))
 		)
 			client.close(undefined, "error name_incorrect_format");
 		client.name = name || false; //unauthenticated
@@ -28,7 +28,7 @@ const server = new WebSocketServer({
 				.toUpperCase(),
 			"hex"
 		).toString("base64url");
-		broadcast("connect " + client.name || client.id);
+		broadcast("connect " + (client.name || client.id));
 		client
 			.on("message", msg => {
 				console.log("[" + (client.name || client.id) + "] " + msg);
@@ -44,13 +44,13 @@ const server = new WebSocketServer({
 					const e = {};
 					switch (endp) {
 						case "name":
-							e.reg = msg.match(/^name ([a-zA-Z0-9\/.]+)$/m);
+							e.reg = msg.match(/^name ([a-zA-Z0-9\/._-]+)$/m);
 							if (!e.reg) return client.send("error name_incorrect_format");
 							if (find(e.reg[1])) return client.send("error name_duplicated");
 							client.name = e.reg[1];
 							return client.send("ok");
 						case "send":
-							e.reg = msg.match(/^send ([a-zA-Z0-9\/.]+) (.*)$/m);
+							e.reg = msg.match(/^send ([a-zA-Z0-9\/._-]+) (.*)$/m);
 							e.target = find(e.reg[1]);
 							if (!e.target) return client.send("error target_not_found");
 							if (!e.reg[2]) return client.send("error content_empty");
@@ -62,6 +62,7 @@ const server = new WebSocketServer({
 							if (!e.reg[1]) return client.send("error content_empty");
 							if (!client.lastsender)
 								return client.send("error target_not_found");
+							client.lastsender = client
 							client.lastsender.send("message " + client.name + " " + e.reg[1]);
 							return client.send("ok");
 						case "list":
