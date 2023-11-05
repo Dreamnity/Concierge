@@ -28,6 +28,7 @@ const server = new WebSocketServer({
 				.toUpperCase(),
 			"hex"
 		).toString("base64url");
+		broadcast("connect " + client.name || client.id);
 		client
 			.on("message", msg => {
 				console.log("[" + (client.name || client.id) + "] " + msg);
@@ -77,7 +78,10 @@ const server = new WebSocketServer({
 					client.send("error internal " + e.message);
 				}
 			})
-			.on("error", e => client.send("error internal " + e.message));
+			.on("error", e => client.send("error internal " + e.message))
+			.on("close", () =>
+				broadcast("disconnect " + client.name || client.id)
+			);
 	})
 	.on("error", () => {})
 	.on("listening", () => console.log("Working."));
@@ -87,18 +91,23 @@ function find(query) {
 			e.id == query || e.name == query || e._socket.address().address == query
 	);
 }
+function broadcast(msg) {
+	console.log('[broadcast] '+msg);
+	server.clients.forEach(ws=>ws.send(msg));
+}
 
 const httpserver = createServer((req, res) => {
+	let url = new URL(req.url,'https://example.com');
 	var data = "";
 	req.on("data", e => (data += e));
-	const path = req.url.substring(1);
+	const path = url.pathname.substring(1);
 	if(!path) return res.end(
 		'list '+[...server.clients.values()].map(e => e.id + ":" + e.name).join(",")
 	);
 	const target = find(path);
 	if (!target) return res.end('error target_not_found');
 	target.lastsender = { send: msg => res.end(msg.match(/^message .+ (.+)$/s)[1]) };
-	req.on("end", () => target.send("request " + data));
+	req.on("end", () => target.send("request " + (data||url.search.substr(1))));
 }).on('upgrade',(request, socket, head)=>server.handleUpgrade(request, socket, head, function done(ws) {
       server.emit('connection', ws, request);
     })
