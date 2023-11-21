@@ -29,6 +29,7 @@ class ConciergeClient extends EventEmitter {
 				return this.emit("error", match?.groups?.message);
 			}
 		})
+		this.#ws.on('open',this.emit('ready'))
 	}
 	async list() {
 		return (await this.#request("list")).substr(5).split(",").map(e => {
