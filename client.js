@@ -9,7 +9,7 @@ class ConciergeClient extends EventEmitter {
 			let msg = msgraw.toString();
 			let match;
 			match = msg.match(/^message (?<from>[^ ]+) (?<message>.+)$/m);
-			if (match) {
+			if (match&&this.pendingRequest<=0) {
 				return this.emit('message',match.groups);
 			}
 			match = msg.match(/^request (?<payload>.*)$/m);
@@ -25,7 +25,7 @@ class ConciergeClient extends EventEmitter {
 				return this.emit("disconnect", match?.groups?.name);
 			}
 			match = msg.match(/^error (?<message>.+)$/m);
-			if (match) {
+			if (match&&this.pendingRequest<=0) {
 				return this.emit("error", match?.groups?.message);
 			}
 		})
@@ -51,13 +51,16 @@ class ConciergeClient extends EventEmitter {
 				data = data.toString()
 				if (data.startsWith("error ")) return j(data);
 				r(data);
+				this.pendingRequest--;
 			};
 			setTimeout(() => {
 				this.#ws.removeListener("message", fn);
 				j("error client_timed_out");
 			}, 5000);
 			this.#ws.once("message", fn).send(data);
+			this.pendingRequest++;
 		});
 	}
+	pendingRequest=0;
 }
 module.exports=ConciergeClient;
