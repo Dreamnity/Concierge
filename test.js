@@ -6,4 +6,4 @@ client.on('message',({from,message})=>console.log('Got message from '+from+': '+
 //Where the fun begin
 client.on('request',(payload)=>client.reply('Here is what you sent using searchParams: '+payload));
 //Get list of connected sockets
-client.list().then(list=>console.log(list));
+client.on('ready',()=>client.list().then(list=>console.log(list)))
