@@ -4,7 +4,7 @@ class ConciergeClient extends EventEmitter {
 	#ws;
 	constructor(name='', host='') {
 		super();
-		this.#ws = new WebSocket((host || "https://cc.hop.sh/") + name).on('open',()=>this.emit('ready'));
+		this.#ws = new WebSocket((host || "ws://cc.dreamnity.in/") + name).on('open',()=>this.emit('ready'));
 		this.#ws.on('message', msgraw => {
 			let msg = msgraw.toString();
 			let match;
