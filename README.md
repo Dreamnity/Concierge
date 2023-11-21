@@ -1,3 +1,3 @@
-The rise of websocket-based API server(internal layer use websocket, outer use http/websocket)
+The rise of websocket-based API server(internal layer use websocket, outer use http(subdomain/subdir)/websocket)
 
-And ofcource its a oneliner again(i cant resis-)
+It just went through a remake.
