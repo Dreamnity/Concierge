@@ -1,0 +1,3 @@
+[submodule "microconf"]
+	path = microconf
+	url = https://github.com/Dreamnity/MicroConf.git
