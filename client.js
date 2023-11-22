@@ -56,6 +56,7 @@ class ConciergeClient extends EventEmitter {
 			};
 			setTimeout(() => {
 				this.#ws.removeListener("message", fn);
+				this.pendingRequest--;
 				j("error client_timed_out");
 			}, 5000);
 			this.#ws.once("message", fn).send(data);
