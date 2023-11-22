@@ -118,8 +118,8 @@ const httpserver = createServer((req, res) => {
   if (!target) return res.end(MicroConf.stringify({ 'error': 'target_not_found' }));
 	target.lastsender = {
     send: msg => {
-			const { options, result } = MicroConf.parse(msg.message);
-			if(options) res.writeHead(options)
+			const { options:{headers,statusCode,statusMessage}, result } = MicroConf.parse(msg.message);
+			if (options) res.writeHead(statusCode,statusMessage,headers);
 			res.end(result || 'ok');
     }
 	};
