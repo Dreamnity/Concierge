@@ -1,13 +1,13 @@
 if(process.platform!=='linux') {console.error('Unsupported operating system(linux required): '+process.platform)}
 process.argv[0] = process.argv[0].match(/\/([^/]+)$/)[1]
-try {require('ws');require('./microconf.js')}catch{console.error('Install dependency using "'+process.argv.join(' ')+' install" first');process.exit(1)}
-//Install websocket
+//Install stuff
 if(process.argv[2]==='install'||process.argv[2]==='update') {
     console.log('Installing websocket library(ws)...');
     require('child_process').execSync('npx -y pnpm i ws');
     console.log('Installing configuration library(microconf)...');
     require('child_process').execSync('wget https://github.com/Dreamnity/MicroConf/raw/main/index.js -O ./microconf.js');
 }
+try {require('ws');require('./microconf.js')}catch{console.error('Install dependency using "'+process.argv.join(' ')+' install" first');process.exit(1)}
 if(!(/^[0-9]+$/.test(process.argv[2]||'')&&/^[a-zA-Z0-9\/._-]+$/.test(process.argv[3]||''))) {
     console.error('Dreamnity\'s subdomain proxy\nUsage:\n'+process.argv.join(' ')
     +' <port> <name>\nOptions:\n - port: port to forward to the subdomain\n - name: the name that will be on servicename.dreamnity.in'
