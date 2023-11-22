@@ -9,7 +9,7 @@ const server = new WebSocketServer({
 })
   .on('connection', (client, req) => {
     client.sendData = client.send;
-    client.send = data=>client.send(typeof data==='string'?data:MicroConf.stringify(data));
+    client.send = data=>client.sendData(typeof data==='string'?data:MicroConf.stringify(data));
 		const name = req.url.substr(1);
 		if (name && (!/[a-zA-Z0-9\/._-]+/m.test(name) || find(name)))
       client.close(undefined, { error: name_incorrect_format });
@@ -31,7 +31,7 @@ const server = new WebSocketServer({
 				.toUpperCase(),
 			'hex'
 		).toString('base64url');
-		broadcast('connect ' + (client.name || client.id));
+		broadcast({ 'event': 'connect', 'name': client.name || client.id });
 		client
 			.on('message', msg => {
 				console.log('[' + (client.name || client.id) + '] ' + msg);
@@ -43,48 +43,48 @@ const server = new WebSocketServer({
 					);
 					const endp = endpraw ? endpraw.slice(1).join('') : '';
 					if (!client.name && endp != 'name')
-            return client.send({ error: name_unspecified });
+            return client.send({ error: 'name_unspecified' });
 					const e = {};
 					switch (endp) {
 						case 'name':
 							e.reg = msg.match(/^name ([a-zA-Z0-9\/._-]+)$/m);
-              if (!e.reg) return client.send({ error: name_incorrect_format });
-							if (find(e.reg[1])) return client.send({error: name_duplicated});
+              if (!e.reg) return client.send({ error: 'name_incorrect_format' });
+							if (find(e.reg[1])) return client.send({error: 'name_duplicated'});
 							client.name = e.reg[1];
 							return client.send('ok');
 						case 'send':
 							e.reg = msg.match(/^send ([a-zA-Z0-9\/._-]+) (.*)$/m);
-              if (!e.reg) return client.send({ error: invalid_name });
+              if (!e.reg) return client.send({ error: 'invalid_name' });
 							e.target = find(e.reg[1]);
-							if (!e.target) return client.send({error: target_not_found});
-              if (!e.reg[2]) return client.send({ error: content_empty });
+							if (!e.target) return client.send({error: 'target_not_found'});
+              if (!e.reg[2]) return client.send({ error: 'content_empty' });
 							e.target.lastsender = client;
               e.target.send({ event: 'message', origin: client.name, message: e.reg[2] });
 							return client.send('ok');
 						case 'reply':
 							e.reg = msg.match(/^reply (.+)$/m);
-							if (!e.reg[1]) return client.send({error: content_empty});
+							if (!e.reg[1]) return client.send({error: 'content_empty'});
 							if (!client.lastsender)
-								return client.send({error: target_not_found});
+								return client.send({error: 'target_not_found'});
 							client.lastsender.lastsender = client;
 							client.lastsender.send({ event: 'message', origin: client.name, message: e.reg[1] });
 							return client.send('ok');
 						case 'list':
 							return client.send(
-								'list ' +
+								JSON.parse('{' +
 									[...server.clients.values()]
-										.map(e => e.id + ':' + (e.name || '_unnamed_'))
-										.join(',')
+										.map(e => JSON.stringify(e.id) + ':' + JSON.stringify((e.name || '_unnamed_')))
+										.join(',')+'}')
 							);
 						default:
-							return client.send('error endpoint_not_found_or_wrong_usage');
+              return client.send({ error: 'endpoint_not_found_or_wrong_usage' });
 					}
 				} catch (e) {
 					client.send('error internal ' + e.message);
 				}
 			})
-			.on('error', e => client.send('error internal ' + e.message))
-			.on('close', () => broadcast('disconnect ' + client.name || client.id))
+      .on('error', e => client.send({ 'error': 'internal ' + e.message }))
+      .on('close', () => broadcast({ 'event': 'disconnect', 'name': client.name || client.id }))
 			.on('pong', hb);
 	})
 	.on('error', () => {})
@@ -96,7 +96,7 @@ function find(query) {
 	);
 }
 function broadcast(msg) {
-	console.log('[broadcast] ' + msg);
+	console.log('[broadcast] ' + (typeof msg==='string'?msg:MicroConf.stringify(msg)));
 	server.clients.forEach(ws => ws.send(msg));
 }
 
@@ -109,14 +109,20 @@ const httpserver = createServer((req, res) => {
 	if (!path)
 		return res.end(
 			'list ' +
-				[...server.clients.values()].map(e => e.id + ':' + e.name).join(',')
+				MicroConf.stringify(JSON.parse('{' +
+        [...server.clients.values()]
+          .map(e => JSON.stringify(e.id) + ':' + JSON.stringify((e.name || '_unnamed_')))
+          .join(',')+'}'))
 		);
 	const target = find(path);
-	if (!target) return res.end('error target_not_found');
+  if (!target) return res.end(MicroConf.stringify({ 'error': 'target_not_found' }));
 	target.lastsender = {
-		send: msg => res.end(msg.match(/^message [a-zA-Z0-9\/._-]+ (.+)$/s)[1]),
+    send: msg => {
+      const {options,result} = MicroConf.parse(msg.message);
+      res.end(result||'ok',options||null);
+    }
 	};
-	req.on('end', () => target.send('request ' + (data || url.search.substr(1))));
+  req.on('end', () => target.send({ event: 'request', payload: (data || url.search.substr(1)) }));
 })
 	.on('upgrade', (request, socket, head) =>
 		server.handleUpgrade(request, socket, head, function done(ws) {
