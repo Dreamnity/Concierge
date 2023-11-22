@@ -80,7 +80,7 @@ const server = new WebSocketServer({
               return client.send({ error: 'endpoint_not_found_or_wrong_usage' });
 					}
 				} catch (e) {
-					client.send('error internal ' + e.message);
+					client.send({'error':'internal',message:e.message});
 				}
 			})
       .on('error', e => client.send({ 'error': 'internal ' + e.message }))
