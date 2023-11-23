@@ -1,4 +1,4 @@
-if(process.platform!=='linux') {console.error('Unsupported operating system(linux required): '+process.platform)}
+if(process.platform!=='linux') {console.error('Unsupported operating system(linux required): '+process.platform);process.exit(1);}
 process.argv[0] = process.argv[0].match(/\/([^/]+)$/)[1]
 //Install stuff
 if(process.argv[2]==='install'||process.argv[2]==='update') {
