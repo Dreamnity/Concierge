@@ -1,3 +1,7 @@
 pnpm-lock.yaml
 node_modules
-./microconf.js
+microconf.js
+# builds
+ccproxy
+sea-prep.blob
+bundled.js

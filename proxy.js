@@ -1,3 +1,4 @@
+require = require('module').createRequire(__filename)
 if(process.platform!=='linux') {console.error('Unsupported operating system(linux required): '+process.platform);process.exit(1);}
 process.argv[0] = process.argv[0].match(/\/([^/]+)$/)[1]
 //Install stuff
@@ -19,6 +20,8 @@ const {get} = require('http')
 const {parse,stringify} = require('./microconf');
 const [name,port] = [process.argv[3],parseInt(process.argv[2])];
 const ws = new WebSocket('ws://cc.dreamnity.in/'+name).on('open',()=>console.log('Listening to '+name+'.dreamnity.in, Forwarding to http://localhost:'+port));
+ws.sendRaw = ws.send;
+ws.send = dat=>{console.log(dat);ws.sendRaw(dat)}
 ws.on('message',async event=>{
     if(event.toString()==='ok') return;
     console.log(event.toString());
@@ -30,7 +33,7 @@ ws.on('message',async event=>{
         //console.log(res)
         ws.send('reply '+res)
     }catch(err){
-        ws.send('reply '+stringify({options:{statusCode:500},result:err.message}))
+        ws.send('reply '+stringify({result:`${err.message}`||`${err}`||'error',options:{statusCode:500},result:err.message}))
     }
 }).on('error',console.error).on('close',()=>'Connection closed unexpectedly');
 function req(url) {
