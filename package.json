@@ -6,11 +6,12 @@
 		"ws": "^8.14.2"
 	},
 	"scripts": {
-		"build-proxy": "node proxy.js update&&browserify --node proxy.js -o bundled.js&&node --experimental-sea-config sea-config.json&&cp $(command -v node) ccproxy&&npx postject ccproxy NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2"
+		"build-proxy-old": "node proxy.js update&&browserify --node proxy.js -o bundled.js&&node --experimental-sea-config sea-config.json&&cp $(command -v node) ccproxy&&npx postject ccproxy NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2"
 	},
 	"devDependencies": {
 		"@types/ws": "^8.5.8",
 		"browserify": "^17.0.0",
-		"gulp": "^4.0.2"
+		"gulp": "^4.0.2",
+		"tinyify": "^4.0.0"
 	}
 }
