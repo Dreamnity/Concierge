@@ -53,7 +53,7 @@ function req(url) {
         res.on('end', () => {
           /* Runs the resolve function when the request ends. */
           delete res.headers.date;
-          resolve({result:rawData,options:{statusCode:res.statusCode,statusMessage:res.statusMessage,headers:res.headers}});
+          resolve({result:Buffer.from(rawData).toString('base64url'),options:{statusCode:res.statusCode,statusMessage:res.statusMessage,headers:res.headers}});
         });
         res.on('error', (err) => {
           /* Runs the reject function if an error occurs. */

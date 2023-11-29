@@ -120,7 +120,7 @@ const httpserver = createServer((req, res) => {
     send: msg => {
 			const { options: { headers, statusCode, statusMessage }, result } = { options:{},...MicroConf.parse(msg.message) };
 			if (headers||statusCode||statusMessage) res.writeHead(statusCode||200,statusMessage||'OK',headers);
-			res.end(result || '');
+			res.end(Buffer.from(result?.toString(),'base64url').toString() || '');
     }
 	};
   req.on('end', () => target.send({ event: 'request', payload: (data || url.search.substr(1)) }));
