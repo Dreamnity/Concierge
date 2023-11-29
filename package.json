@@ -1,4 +1,6 @@
 {
+	"name":"concierge",
+	"version": "2.0.1",
 	"main": "index.js",
 	"dependencies": {
 		"bufferutil": "^4.0.7",
